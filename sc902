@@ -1,0 +1,64 @@
+#!/bin/bash
+case "$1" in
+  start)
+    if pgrep -f "python.*sc902.py" >/dev/null; then
+      echo "⚠ Already running (PID: $(pgrep -f 'python.*sc902.py'))"
+    else
+      nohup python ~/.sc902/sc902.py >> ~/.sc902/sweep.log 2>&1 &
+      echo "🟢 Started! (PID: $!)"
+      echo "📊 View logs: ./sc902 log"
+    fi
+    ;;
+  stop)
+    pkill -f "python.*sc902.py" && echo "🔴 Stopped" || echo "⚠ Not running"
+    ;;
+  log)
+    if [ "$2" = "--live" ]; then
+      tail -f ~/.sc902/sweep.log
+    else
+      cat ~/.sc902/sweep.log
+    fi
+    ;;
+  found)
+    grep "💰" ~/.sc902/sweep.log
+    ;;
+  status)
+    if pgrep -f "python.*sc902.py" >/dev/null; then
+      echo "🟢 Running (PID: $(pgrep -f 'python.*sc902.py'))"
+    else
+      echo "🔴 Stopped"
+    fi
+    ;;
+  clean)
+    grep "💰" ~/.sc902/sweep.log > ~/.sc902/temp.log 2>/dev/null
+    if [ -s ~/.sc902/temp.log ]; then
+      mv ~/.sc902/temp.log ~/.sc902/sweep.log
+      echo "🟢 Logs cleaned! Only found wallets kept."
+    else
+      echo "ℹ️ No found wallets to keep. Creating fresh log."
+      echo "🚀 SC902 Started - $(date)" > ~/.sc902/sweep.log
+    fi
+    rm -f ~/.sc902/temp.log
+    ;;
+  dashboard)
+    echo "=== SC902 DASHBOARD ==="
+    echo "Made by SSI902 - The Finest Investor 😎"
+    echo "========================"
+    echo "Status: $(./sc902 status | cut -d' ' -f1)"
+    echo "Found: $(grep -c '💰' ~/.sc902/sweep.log) wallets"
+    echo "Last check: $(tail -1 ~/.sc902/sweep.log | cut -d':' -f1-3)"
+    echo "========================"
+    echo "Commands:"
+    echo "  ./sc902 start     - Start scanner"
+    echo "  ./sc902 stop      - Stop scanner"
+    echo "  ./sc902 log       - View logs"
+    echo "  ./sc902 found     - Show found wallets"
+    echo "  ./sc902 status    - Check status"
+    echo "  ./sc902 clean     - Clean logs"
+    echo "  ./sc902 dashboard - This menu"
+    echo "========================"
+    ;;
+  *)
+    ./sc902 dashboard
+    ;;
+esac
